@@ -25,7 +25,7 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
   const closeModal = () => setSelectedDetails(null);
 
   return (
-    <div className="space-y-16 relative">
+    <div className="space-y-12 relative">
       {/* Modal for Detailed Stats */}
       {selectedDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print animate-in fade-in duration-300">
@@ -102,39 +102,40 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
 
       {/* Tables Section */}
       {Object.entries(rasedSummary).map(([saf, fasels]) => (
-        <div key={saf} className="space-y-12">
+        <div key={saf} className="space-y-8">
           {Object.entries(fasels).map(([fasel, periodsData]) => {
             const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
             const hasData = targetPeriods.some(p => periodsData[p] && Object.keys(periodsData[p]).length > 0);
             if (!hasData) return null;
 
             return (
-              <div key={`${saf}-${fasel}`} className="space-y-6 print-break-before">
-                <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl text-center print-card relative overflow-hidden">
+              <div key={`${saf}-${fasel}`} className="space-y-4 print-avoid-break">
+                {/* Header div needs to stay with its tables */}
+                <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl text-center print-card relative overflow-hidden print-header-stay">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                  <h3 className="text-2xl font-black relative z-10">إحصائيات {saf} - {fasel}</h3>
-                  <p className="text-blue-400 text-xs font-black uppercase mt-1 relative z-10">{periodLabel}</p>
+                  <h3 className="text-xl font-black relative z-10">إحصائيات {saf} - {fasel}</h3>
+                  <p className="text-blue-400 text-[10px] font-black uppercase mt-1 relative z-10">{periodLabel}</p>
                 </div>
 
-                <div className={`grid gap-8 ${period === 'both' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+                <div className={`grid gap-6 ${period === 'both' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
                   {targetPeriods.map(p => {
                     const subjects = periodsData[p];
                     if (!subjects) return null;
 
                     return (
-                      <div key={p} className="bg-white rounded-[2.25rem] shadow-xl border border-slate-100 overflow-hidden print-card transition-all hover:shadow-2xl">
-                        <div className={`py-4 px-8 text-white font-black text-sm flex justify-between items-center ${p === 'أولى' ? 'bg-blue-600' : 'bg-purple-600'}`}>
+                      <div key={p} className="bg-white rounded-[1.5rem] shadow-xl border border-slate-100 overflow-hidden print-card transition-all hover:shadow-2xl">
+                        <div className={`py-3 px-6 text-white font-black text-xs flex justify-between items-center ${p === 'أولى' ? 'bg-blue-600' : 'bg-purple-600'}`}>
                           <span>نتائج الفترة {p}</span>
-                          <span className="bg-white/20 px-3 py-0.5 rounded-lg text-[10px] uppercase">عدد المواد: {Object.keys(subjects).length}</span>
+                          <span className="bg-white/20 px-2 py-0.5 rounded-lg text-[9px] uppercase">المواد: {Object.keys(subjects).length}</span>
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-right border-collapse">
                             <thead>
-                              <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                                <th className="px-6 py-4">المادة (اضغط للتفاصيل)</th>
-                                {hasTeachers && <th className="px-6 py-4">المعلم</th>}
-                                <th className="px-6 py-4 text-center">الطلاب</th>
-                                <th className="px-6 py-4 text-center">الإنجاز</th>
+                              <tr className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                <th className="px-4 py-3">المادة (اضغط للتفاصيل)</th>
+                                {hasTeachers && <th className="px-4 py-3">المعلم</th>}
+                                <th className="px-4 py-3 text-center">الطلاب</th>
+                                <th className="px-4 py-3 text-center">الإنجاز</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -142,23 +143,23 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
                                 const teachers = teacherMapping[saf]?.[fasel]?.[subj] || ["---"];
                                 return (
                                   <tr key={idx} className={`border-b border-slate-50 transition-colors hover:bg-blue-50/30 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-3">
                                       <button 
                                         onClick={() => setSelectedDetails({ saf, fasel, period: p, subject: subj, teachers, data })} 
-                                        className="font-bold text-slate-800 text-xs text-right group flex flex-col items-start"
+                                        className="font-bold text-slate-800 text-[11px] text-right group flex flex-col items-start"
                                       >
                                         <span className="group-hover:text-blue-600 transition-colors">{subj}</span>
-                                        <span className="text-[9px] text-blue-400 font-black opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">اضغط للتفاصيل ➜</span>
+                                        <span className="text-[8px] text-blue-400 font-black opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 no-print">اضغط للتفاصيل ➜</span>
                                       </button>
                                     </td>
-                                    {hasTeachers && <td className="px-6 py-4 text-slate-500 text-[10px] font-bold">{teachers.join('، ')}</td>}
-                                    <td className="px-6 py-4 text-center text-[10px] font-black text-slate-400">
+                                    {hasTeachers && <td className="px-4 py-3 text-slate-500 text-[9px] font-bold">{teachers.join('، ')}</td>}
+                                    <td className="px-4 py-3 text-center text-[9px] font-black text-slate-400">
                                       {data.rasidCount} / {data.rasidCount + data.lamRasidCount}
                                     </td>
-                                    <td className="px-6 py-4">
-                                      <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
-                                        <span className={`text-[10px] font-black ${data.percentage === 100 ? 'text-emerald-500' : 'text-slate-600'}`}>{data.percentage}%</span>
-                                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                                    <td className="px-4 py-3">
+                                      <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                                        <span className={`text-[9px] font-black ${data.percentage === 100 ? 'text-emerald-500' : 'text-slate-600'}`}>{data.percentage}%</span>
+                                        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                                           <div className={`h-full rounded-full transition-all duration-1000 ${data.percentage === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${data.percentage}%` }}></div>
                                         </div>
                                       </div>
@@ -169,7 +170,6 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
                             </tbody>
                           </table>
                         </div>
-                        <div className="p-3 bg-slate-50 text-[9px] text-slate-400 font-bold text-center border-t border-slate-100">تحليل رصد الدرجات - {p}</div>
                       </div>
                     );
                   })}

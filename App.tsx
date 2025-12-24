@@ -75,9 +75,9 @@ const App: React.FC = () => {
     <div className="min-h-screen p-4 md:p-8 bg-slate-50">
       <header className="max-w-6xl mx-auto text-center mb-12 no-print">
         <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg shadow-blue-200">الإصدار المطور 2025</div>
-        <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight">نظام رصد المواد الذكي</h1>
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight">نظام متابعة رصد المواد</h1>
         <div className="h-1.5 w-40 bg-blue-600 mx-auto rounded-full mb-6"></div>
-        <p className="text-slate-500 text-lg md:text-xl font-bold max-w-2xl mx-auto leading-relaxed">أداة احترافية لتحليل ومتابعة رصد درجات الطلاب في نظام نور بدقة وسهولة</p>
+        <p className="text-slate-500 text-lg md:text-xl font-bold max-w-2xl mx-auto leading-relaxed">أداة احترافية لمتابعة رصد درجات الطلاب في نظام نور بدقة وسهولة</p>
       </header>
 
       <main className="max-w-6xl mx-auto space-y-10">
@@ -210,16 +210,36 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-5 justify-center">
+            <div className="flex flex-wrap gap-6 justify-center">
+              {/* استعراض التقرير التفصيلي - المطور */}
               <button 
                 onClick={() => setShowResults(true)}
                 disabled={Object.keys(rasedSummary).length === 0}
-                className="group relative bg-blue-600 text-white px-12 py-4.5 rounded-[1.5rem] font-black hover:bg-blue-700 disabled:opacity-40 transition-all shadow-2xl shadow-blue-200 flex items-center gap-3"
+                className="group relative px-12 py-5 rounded-[2rem] font-black text-white transition-all duration-300 
+                           bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700
+                           hover:shadow-[0_15px_40px_-10px_rgba(37,99,235,0.6)] 
+                           hover:-translate-y-1.5 hover:scale-[1.02]
+                           active:scale-95 active:translate-y-0
+                           disabled:opacity-40 disabled:pointer-events-none 
+                           flex items-center gap-4 overflow-hidden"
               >
-                🚀 استعراض التقرير التفصيلي
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                <span className="text-2xl group-hover:rotate-12 transition-transform">🚀</span>
+                <span className="relative tracking-tight text-lg">استعراض التقرير التفصيلي</span>
               </button>
-              <button onClick={printReport} className="bg-slate-900 text-white px-12 py-4.5 rounded-[1.5rem] font-black hover:bg-slate-800 transition-all shadow-2xl flex items-center gap-3">
-                🖨️ طباعة النتائج
+
+              {/* طباعة النتائج - المطور */}
+              <button 
+                onClick={printReport}
+                className="group px-12 py-5 rounded-[2rem] font-black text-white transition-all duration-300
+                           bg-slate-900 border border-slate-800
+                           hover:bg-black hover:shadow-[0_15px_40px_-10px_rgba(15,23,42,0.4)]
+                           hover:-translate-y-1.5 hover:scale-[1.02]
+                           active:scale-95 active:translate-y-0
+                           flex items-center gap-4 shadow-xl"
+              >
+                <span className="text-2xl group-hover:scale-110 transition-transform">🖨️</span>
+                <span className="tracking-tight text-lg">طباعة النتائج</span>
               </button>
             </div>
           </div>
@@ -243,9 +263,23 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="max-w-6xl mx-auto mt-20 pb-10 text-center no-print">
-         <div className="h-px bg-slate-200 w-full mb-8"></div>
-         <p className="text-slate-400 text-xs font-black uppercase tracking-widest">تم التطوير لتسهيل العمل الإداري المدرسي • 2025</p>
+      <footer className="max-w-6xl mx-auto mt-32 pb-16 text-center no-print relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+        <div className="pt-12 flex flex-col items-center gap-4">
+          <div className="w-14 h-14 bg-white rounded-[1.2rem] shadow-2xl flex items-center justify-center border border-slate-50 mb-2 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+             <span className="text-2xl">✨</span>
+          </div>
+          <p className="text-slate-700 text-xl font-bold tracking-tight">
+            تم التطوير بواسطة <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-black">ياسر الهذلي</span>
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="h-px w-8 bg-slate-200"></div>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
+              لتسهيل العمل الإداري المدرسي • 2025
+            </p>
+            <div className="h-px w-8 bg-slate-200"></div>
+          </div>
+        </div>
       </footer>
     </div>
   );
