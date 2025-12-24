@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RasedSummary, TeacherMapping, Period } from './types';
 import { processRasedFile, extractSummaryData, normalizeString } from './utils/excelProcessor';
 import * as XLSX from 'xlsx';
@@ -7,25 +7,42 @@ import Dashboard from './components/Dashboard';
 import SummaryTables from './components/SummaryTables';
 import TeachersReport from './components/TeachersReport';
 import TrackingTables from './components/TrackingTables';
+import AdvancedAnalytics from './components/AdvancedAnalytics';
+import PremiumReports from './components/PremiumReports';
 
 const App: React.FC = () => {
-  const [rasedSummary, setRasedSummary] = useState<RasedSummary>({});
-  const [teacherMapping, setTeacherMapping] = useState<TeacherMapping>({});
+  const [rasedSummary, setRasedSummary] = useState<RasedSummary>(() => {
+    const saved = localStorage.getItem('rased_data');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [teacherMapping, setTeacherMapping] = useState<TeacherMapping>(() => {
+    const saved = localStorage.getItem('teacher_mapping');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('both');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [showNoorGuide, setShowNoorGuide] = useState(false);
-  const [showTeacherGuide, setShowTeacherGuide] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'reports'>('dashboard');
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [isDragging, setIsDragging] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
-  const hasTeachers = Object.keys(teacherMapping).length > 0;
+  useEffect(() => {
+    localStorage.setItem('rased_data', JSON.stringify(rasedSummary));
+  }, [rasedSummary]);
 
-  const handleRasedFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  useEffect(() => {
+    localStorage.setItem('teacher_mapping', JSON.stringify(teacherMapping));
+  }, [teacherMapping]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const handleRasedFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
     setIsProcessing(true);
     let updatedSummary = { ...rasedSummary };
-
     for (let i = 0; i < files.length; i++) {
       try {
         const { data } = await processRasedFile(files[i]);
@@ -34,7 +51,6 @@ const App: React.FC = () => {
         console.error("Error processing file:", files[i].name, err);
       }
     }
-
     setRasedSummary(updatedSummary);
     setIsProcessing(false);
   };
@@ -42,14 +58,12 @@ const App: React.FC = () => {
   const handleTeacherFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (evt) => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      
       const mapping: TeacherMapping = {};
       jsonData.slice(1).forEach(row => {
         if (row.length < 4) return;
@@ -57,228 +71,183 @@ const App: React.FC = () => {
         const saf = normalizeString(row[1]);
         const subject = normalizeString(row[2]);
         const fasel = normalizeString(row[3]);
-
         if (!mapping[saf]) mapping[saf] = {};
         if (!mapping[saf][fasel]) mapping[saf][fasel] = {};
         if (!mapping[saf][fasel][subject]) mapping[saf][fasel][subject] = [];
         mapping[saf][fasel][subject].push(teacher);
       });
-
       setTeacherMapping(mapping);
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const printReport = () => window.print();
+  const clearAllData = () => {
+    if (window.confirm("سيتم حذف جميع البيانات المؤرشفة، هل أنت متأكد؟")) {
+      setRasedSummary({});
+      setTeacherMapping({});
+      localStorage.clear();
+    }
+  };
+
+  const hasData = Object.keys(rasedSummary).length > 0;
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-slate-50">
-      <header className="max-w-6xl mx-auto text-center mb-12 no-print">
-        <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg shadow-blue-200">الإصدار المطور 2025</div>
-        <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight">نظام متابعة رصد المواد</h1>
-        <div className="h-1.5 w-40 bg-blue-600 mx-auto rounded-full mb-6"></div>
-        <p className="text-slate-500 text-lg md:text-xl font-bold max-w-2xl mx-auto leading-relaxed">أداة احترافية لمتابعة رصد درجات الطلاب في نظام نور بدقة وسهولة</p>
-      </header>
+    <div className={`min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      <header className="max-w-[95%] mx-auto text-center py-10 px-4 no-print relative">
+        <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 left-4 p-3 rounded-2xl bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800 hover:scale-110 transition-all z-50">
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
+        <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase mb-4 shadow-lg">الإصدار الاحترافي v2.5</div>
+        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight dark:text-white">نظام متابعة رصد المواد</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-lg font-bold max-w-2xl mx-auto mb-6">حل ذكي لإدارة ومتابعة رصد الدرجات في نظام نور</p>
+        
+        <button 
+          onClick={() => setShowInstructions(!showInstructions)}
+          className="bg-slate-200 dark:bg-slate-800 px-6 py-2 rounded-full text-xs font-black hover:bg-blue-600 hover:text-white transition-all shadow-md"
+        >
+          {showInstructions ? 'إخفاء التعليمات ▲' : 'كيف أحصل على الملفات؟ ▼'}
+        </button>
 
-      <main className="max-w-6xl mx-auto space-y-10">
-        <section className="bg-white p-6 md:p-10 rounded-[3rem] shadow-2xl border border-slate-100 no-print">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {/* Noor Files Input */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-800">
-                  <span className="bg-blue-600 p-2 rounded-xl text-white shadow-md">📁</span>
-                  ملفات رصد نور (Excel)
-                </label>
-                <button 
-                  onClick={() => { setShowNoorGuide(!showNoorGuide); setShowTeacherGuide(false); }}
-                  className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-black hover:bg-blue-100 transition-all border border-blue-100"
-                >
-                  {showNoorGuide ? "إغلاق الدليل" : "كيف تحصل على الملفات؟"}
-                </button>
-              </div>
-              <input 
-                type="file" 
-                multiple 
-                onChange={handleRasedFiles}
-                className="block w-full text-xs text-slate-500 file:ml-4 file:py-3.5 file:px-8 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
-              />
+        {showInstructions && (
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-right animate-in fade-in slide-in-from-top-4 duration-500 max-w-5xl mx-auto">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-2 h-full bg-blue-600"></div>
+              <h4 className="font-black text-blue-600 mb-6 flex items-center gap-3 text-lg">
+                <span className="text-2xl">ℹ️</span> خطوات استخراج ملفات الرصد:
+              </h4>
+              <ol className="text-xs space-y-4 text-slate-600 dark:text-slate-400 font-bold">
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">1</span> من نظام نور، توجه إلى قائمة "التقارير"</li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">2</span> اختر "تقارير الدرجات"</li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">3</span> اختر تقرير "متابعة رصد الفترات"</li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">4</span> حدد الصف والفصل الدراسي المطلوب</li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">5</span> اضغط على زر "عرض"</li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">6</span> يجب توفر إضافة "مدرستي بلس" لتحميل الملف</li>
+                <li className="mt-2 mr-8">
+                  <a href="https://chromewebstore.google.com/detail/%D9%85%D8%AF%D8%B1%D8%B3%D8%AA%D9%8A-%D8%A8%D9%84%D8%B3/mklbcllkgbfnhkfmmcmfghmjnjfomjff?hl=ar" target="_blank" rel="noreferrer" className="text-blue-500 underline text-[10px] hover:text-blue-700 transition-colors">تحميل الإضافة ➜</a>
+                </li>
+                <li className="flex gap-3"><span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 w-5 h-5 rounded-full flex items-center justify-center shrink-0">7</span> حمل ملفات جميع الفصول واحفظها في مجلد واحد لسهولة الرفع</li>
+              </ol>
             </div>
             
-            {/* Teacher File Input */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-800">
-                  <span className="bg-teal-600 p-2 rounded-xl text-white shadow-md">👨‍🏫</span>
-                  ملف المعلمين (اختياري)
-                </label>
-                <button 
-                  onClick={() => { setShowTeacherGuide(!showTeacherGuide); setShowNoorGuide(false); }}
-                  className="text-[10px] bg-teal-50 text-teal-600 px-3 py-1.5 rounded-full font-black hover:bg-teal-100 transition-all border border-teal-100"
-                >
-                  {showTeacherGuide ? "إخفاء الدليل" : "شكل ملف المعلم؟"}
-                </button>
-              </div>
-              <input 
-                type="file" 
-                onChange={handleTeacherFile}
-                className="block w-full text-xs text-slate-500 file:ml-4 file:py-3.5 file:px-8 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-teal-600 file:text-white hover:file:bg-teal-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
-              />
-            </div>
-          </div>
-
-          {/* Noor Guide Section */}
-          {showNoorGuide && (
-            <div className="mt-8 p-8 bg-slate-900 rounded-[2.5rem] text-white animate-in slide-in-from-top duration-500 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full -ml-32 -mt-32 blur-3xl"></div>
-              <h4 className="text-lg font-black mb-6 flex items-center gap-3 relative z-10">
-                <span className="bg-blue-600 p-2 rounded-xl">ℹ️</span> 
-                خطوات استخراج ملفات الرصد من نظام نور:
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-2 h-full bg-teal-500"></div>
+              <h4 className="font-black text-teal-600 mb-6 flex items-center gap-3 text-lg">
+                <span className="text-2xl">👨‍🏫</span> تنسيق ملف المعلمين (Excel):
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 text-sm font-bold">
-                <ul className="space-y-4 text-slate-300">
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">1</span> من نظام نور، توجه إلى قائمة "التقارير"</li>
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">2</span> اختر "تقارير الدرجات"</li>
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">3</span> اختر تقرير "متابعة رصد الفترات"</li>
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">4</span> حدد الصف والفصل الدراسي المطلوب</li>
-                </ul>
-                <ul className="space-y-4 text-slate-300">
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">5</span> اضغط على زر "عرض"</li>
-                  <li className="flex gap-3 items-start text-amber-400">
-                    <span className="bg-amber-400/20 text-amber-400 w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">6</span> 
-                    يجب توفر إضافة "مدرستي بلس" لتحميل الملف
-                    <a href="https://chromewebstore.google.com/detail/maogiolhkdhjobnlobpkcpnmamnmilno?utm_source=item-share-cb" target="_blank" rel="noreferrer" className="inline-block bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-[10px] text-white underline mr-2">تحميل الإضافة ➜</a>
-                  </li>
-                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">7</span> حمل ملفات جميع الفصول واحفظها في مجلد واحد لسهولة الرفع</li>
-                </ul>
-              </div>
-              <div className="mt-8 pt-6 border-t border-white/10 text-xs text-slate-400 font-bold flex items-center gap-2">
-                <span className="text-blue-500">💡 نصيحة:</span> عند اختيار الملفات من جهازك، يمكنك تظليل جميع الملفات ورفعها دفعة واحدة.
-              </div>
-            </div>
-          )}
-
-          {/* Teacher Guide Section */}
-          {showTeacherGuide && (
-            <div className="mt-8 p-8 bg-slate-900 rounded-[2.5rem] text-white animate-in slide-in-from-top duration-500 relative overflow-hidden">
-              <h4 className="text-lg font-black mb-6 flex items-center gap-3 relative z-10">
-                <span className="bg-teal-600 p-2 rounded-xl">👨‍🏫</span> 
-                تنسيق ملف المعلمين المطلوب (Excel):
-              </h4>
-              <div className="overflow-x-auto relative z-10">
-                <table className="w-full text-center text-[10px] border-collapse bg-white/5 rounded-2xl overflow-hidden">
-                  <thead>
-                    <tr className="bg-white/10">
-                      <th className="p-3 border-l border-white/10">اسم المعلم</th>
-                      <th className="p-3 border-l border-white/10">الصف</th>
-                      <th className="p-3 border-l border-white/10">المادة</th>
-                      <th className="p-3">الفصل</th>
+              <p className="text-[10px] mb-6 text-slate-400 font-bold bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">يجب أن يحتوي الملف على الأعمدة التالية بالترتيب (أو مع ترويسة واضحة):</p>
+              
+              <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                <table className="w-full text-[9px] font-black text-center border-collapse">
+                  <thead className="bg-slate-100 dark:bg-slate-800">
+                    <tr>
+                      <th className="p-2 border border-slate-200 dark:border-slate-700">اسم المعلم</th>
+                      <th className="p-2 border border-slate-200 dark:border-slate-700">الصف</th>
+                      <th className="p-2 border border-slate-200 dark:border-slate-700">المادة</th>
+                      <th className="p-2 border border-slate-200 dark:border-slate-700">الفصل</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr className="border-t border-white/5">
-                      <td className="p-3 border-l border-white/10">خالد الشمري</td>
-                      <td className="p-3 border-l border-white/10">أول متوسط</td>
-                      <td className="p-3 border-l border-white/10">علوم</td>
-                      <td className="p-3">1</td>
+                  <tbody className="text-slate-500 dark:text-slate-400">
+                    <tr>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">خالد الشمري</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">أول متوسط</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">علوم</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">1</td>
                     </tr>
-                    <tr className="border-t border-white/5">
-                      <td className="p-3 border-l border-white/10">نورة القحطاني</td>
-                      <td className="p-3 border-l border-white/10">ثالث متوسط</td>
-                      <td className="p-3 border-l border-white/10">لغة إنجليزية</td>
-                      <td className="p-3">3</td>
+                    <tr className="bg-slate-50 dark:bg-slate-800/30">
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">نورة القحطاني</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">ثالث متوسط</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">لغة إنجليزية</td>
+                      <td className="p-2 border border-slate-200 dark:border-slate-700">3</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              <p className="mt-6 text-[10px] text-slate-400 font-bold leading-relaxed">
+              <p className="mt-6 text-[9px] text-amber-600 dark:text-amber-500 font-bold flex gap-2 items-start">
+                <span className="text-lg">💡</span>
                 * ملف المعلمين غير ضروري لتشغيل النظام، ولكنه مطلوب في حال أردت تفعيل ميزة "تقارير المعلمين المقصرين".
               </p>
             </div>
-          )}
+          </div>
+        )}
+      </header>
 
-          <div className="mt-12 flex flex-col items-center space-y-10 border-t border-slate-100 pt-10">
-            <div className="flex bg-slate-100 p-1.5 rounded-[1.8rem] shadow-inner">
-              {(['أولى', 'ثانية', 'both'] as const).map(p => (
-                <button 
-                  key={p}
-                  onClick={() => setSelectedPeriod(p)}
-                  className={`px-8 md:px-12 py-3.5 rounded-2xl font-black transition-all duration-300 text-sm ${selectedPeriod === p ? 'bg-white text-blue-600 shadow-xl scale-105' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  {p === 'أولى' ? 'الفترة الأولى' : p === 'ثانية' ? 'الفترة الثانية' : 'الفترتين معاً'}
-                </button>
+      {/* Changed max-w-7xl to max-w-full with padding for edge-to-edge look */}
+      <main className="max-w-[98%] mx-auto px-2 space-y-10 pb-20">
+        <section 
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleRasedFiles(e.dataTransfer.files); }}
+          className={`no-print p-8 md:p-12 rounded-[3rem] shadow-2xl border-2 border-dashed transition-all duration-300 ${isDragging ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-400 scale-[1.01]' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 text-sm font-black">
+                <span className="bg-blue-600 p-2 rounded-xl text-white shadow-md">📁</span> رفع ملفات نور
+              </label>
+              <input type="file" multiple onChange={(e) => handleRasedFiles(e.target.files)} className="block w-full text-xs file:py-3 file:px-6 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white cursor-pointer bg-slate-50 dark:bg-slate-800 rounded-xl p-2" />
+            </div>
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 text-sm font-black">
+                <span className="bg-teal-600 p-2 rounded-xl text-white shadow-md">👨‍🏫</span> ملف المعلمين (اختياري)
+              </label>
+              <input type="file" onChange={handleTeacherFile} className="block w-full text-xs file:py-3 file:px-6 file:rounded-xl file:border-0 file:bg-teal-600 file:text-white cursor-pointer bg-slate-50 dark:bg-slate-800 rounded-xl p-2" />
+            </div>
+          </div>
+
+          <div className="mt-10 pt-10 border-t border-slate-100 dark:border-slate-800 flex flex-wrap justify-center items-center gap-6">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[1.8rem] shadow-inner">
+              {(['dashboard', 'analytics', 'reports'] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-2xl font-black text-xs transition-all ${activeTab === tab ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md' : 'text-slate-500'}`}>{tab === 'dashboard' ? '📊 لوحة التحكم' : tab === 'analytics' ? '📈 التحليلات' : '📄 التقارير'}</button>
               ))}
             </div>
-
-            <div className="flex flex-wrap gap-6 justify-center">
-              {/* استعراض التقرير التفصيلي - المطور */}
-              <button 
-                onClick={() => setShowResults(true)}
-                disabled={Object.keys(rasedSummary).length === 0}
-                className="group relative px-12 py-5 rounded-[2rem] font-black text-white transition-all duration-300 
-                           bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700
-                           hover:shadow-[0_15px_40px_-10px_rgba(37,99,235,0.6)] 
-                           hover:-translate-y-1.5 hover:scale-[1.02]
-                           active:scale-95 active:translate-y-0
-                           disabled:opacity-40 disabled:pointer-events-none 
-                           flex items-center gap-4 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                <span className="text-2xl group-hover:rotate-12 transition-transform">🚀</span>
-                <span className="relative tracking-tight text-lg">استعراض التقرير التفصيلي</span>
-              </button>
-
-              {/* طباعة النتائج - المطور */}
-              <button 
-                onClick={printReport}
-                className="group px-12 py-5 rounded-[2rem] font-black text-white transition-all duration-300
-                           bg-slate-900 border border-slate-800
-                           hover:bg-black hover:shadow-[0_15px_40px_-10px_rgba(15,23,42,0.4)]
-                           hover:-translate-y-1.5 hover:scale-[1.02]
-                           active:scale-95 active:translate-y-0
-                           flex items-center gap-4 shadow-xl"
-              >
-                <span className="text-2xl group-hover:scale-110 transition-transform">🖨️</span>
-                <span className="tracking-tight text-lg">طباعة النتائج</span>
-              </button>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[1.8rem] shadow-inner">
+              {(['أولى', 'ثانية', 'both'] as const).map(p => (
+                <button key={p} onClick={() => setSelectedPeriod(p)} className={`px-5 py-3 rounded-2xl font-black text-xs transition-all ${selectedPeriod === p ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-500'}`}>{p === 'أولى' ? 'ف1' : p === 'ثانية' ? 'ف2' : 'شامل'}</button>
+              ))}
             </div>
+            <button onClick={clearAllData} className="px-6 py-3 rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-black text-xs hover:bg-rose-100 transition-all border border-rose-100">🗑️ مسح الأرشيف</button>
           </div>
         </section>
 
-        {isProcessing && (
-          <div className="text-center py-24 bg-white rounded-[3rem] shadow-2xl border border-slate-100">
-            <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-600 border-r-4 border-r-blue-100 mx-auto mb-8"></div>
-            <p className="text-slate-900 text-2xl font-black">جاري تحليل البيانات بذكاء...</p>
-            <p className="text-slate-400 mt-2 font-bold">يرجى الانتظار قليلاً لمعالجة ملفات نور</p>
+        {!hasData && !isProcessing && (
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-xl opacity-60 max-w-6xl mx-auto">
+            <div className="text-6xl mb-6">📂</div>
+            <h3 className="text-xl font-black mb-2">لا توجد بيانات حالياً</h3>
+            <p className="text-sm font-bold text-slate-400">قم برفع ملفات الإكسل المستخرجة من نظام نور للبدء بالتحليل</p>
           </div>
         )}
 
-        {showResults && !isProcessing && (
-          <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-            <Dashboard rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
-            {hasTeachers && <TeachersReport rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />}
-            <SummaryTables rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
-            <TrackingTables rasedSummary={rasedSummary} period={selectedPeriod} />
+        {isProcessing && (
+          <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl max-w-6xl mx-auto">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-6"></div>
+            <p className="font-black text-xl">جاري معالجة البيانات بذكاء...</p>
+          </div>
+        )}
+
+        {hasData && !isProcessing && (
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {activeTab === 'dashboard' && (
+              <div className="space-y-16">
+                <Dashboard rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
+                <SummaryTables rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
+                <TrackingTables rasedSummary={rasedSummary} period={selectedPeriod} />
+              </div>
+            )}
+            {activeTab === 'analytics' && <AdvancedAnalytics rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />}
+            {activeTab === 'reports' && (
+               <div className="space-y-16 max-w-7xl mx-auto">
+                <PremiumReports rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
+               </div>
+            )}
           </div>
         )}
       </main>
-
-      <footer className="max-w-6xl mx-auto mt-32 pb-16 text-center no-print relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+      <footer className="max-w-6xl mx-auto mt-20 pb-16 text-center no-print border-t border-slate-100 dark:border-slate-800">
         <div className="pt-12 flex flex-col items-center gap-4">
-          <div className="w-14 h-14 bg-white rounded-[1.2rem] shadow-2xl flex items-center justify-center border border-slate-50 mb-2 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-             <span className="text-2xl">✨</span>
-          </div>
-          <p className="text-slate-700 text-xl font-bold tracking-tight">
+          <p className="text-slate-700 dark:text-slate-300 text-xl font-bold">
             تم التطوير بواسطة <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-black">ياسر الهذلي</span>
           </p>
-          <div className="flex items-center gap-3">
-            <div className="h-px w-8 bg-slate-200"></div>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
-              لتسهيل العمل الإداري المدرسي • 2025
-            </p>
-            <div className="h-px w-8 bg-slate-200"></div>
-          </div>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">لتسهيل العمل الإداري المدرسي • 2025</p>
         </div>
       </footer>
     </div>
