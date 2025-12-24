@@ -56,6 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
     const total = totalRasid + totalLamRasid;
     const percentage = total > 0 ? ((totalRasid / total) * 100).toFixed(1) : "0";
 
+    // ترتيب الفصول تنازلياً حسب نسبة الرصد
     classesList.sort((a, b) => b.percentage - a.percentage);
 
     return {
@@ -73,12 +74,8 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
 
   const periodLabel = period === 'أولى' ? 'الفترة الأولى' : period === 'ثانية' ? 'الفترة الثانية' : 'الفترتين الأولى والثانية الشاملة';
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-700 max-w-7xl mx-auto">
+    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-700">
       {/* Hero Stats Card */}
       <div className="bg-slate-900 text-white p-10 md:p-14 rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center print-card overflow-hidden relative border border-slate-800">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px] -mr-40 -mt-40"></div>
@@ -87,13 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
         <div className="relative z-10 text-center md:text-right">
           <div className="inline-block bg-white/10 px-3 py-1 rounded-lg text-[10px] font-black uppercase mb-4 tracking-widest border border-white/10">التقرير العام للمدرسة</div>
           <h2 className="text-4xl font-black mb-2">إحصائية الرصد الكلية</h2>
-          <p className="text-blue-400 font-bold uppercase tracking-widest text-xs mb-6">{periodLabel}</p>
-          <button 
-            onClick={handlePrint}
-            className="no-print bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-xs hover:bg-slate-200 transition-all shadow-xl flex items-center gap-2"
-          >
-            <span>🖨️</span> طباعة التقرير العام
-          </button>
+          <p className="text-blue-400 font-bold uppercase tracking-widest text-xs">{periodLabel}</p>
         </div>
 
         <div className="relative z-10 text-center mt-8 md:mt-0">
@@ -115,28 +106,29 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
 
       {/* Main Insights Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-10 rounded-[3rem] shadow-xl border border-slate-100 dark:border-slate-800 print-card">
-          <h3 className="text-xl font-black text-slate-800 dark:text-white mb-10 flex items-center gap-3">
-            <span className="bg-amber-100 dark:bg-amber-900/40 p-2.5 rounded-2xl text-xl shadow-inner">🏆</span> ترتيب الفصول حسب نسبة الرصد
+        {/* Leaderboard - الفصول الأكثر إنجازاً */}
+        <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 print-card">
+          <h3 className="text-xl font-black text-slate-800 mb-10 flex items-center gap-3">
+            <span className="bg-amber-100 p-2.5 rounded-2xl text-xl shadow-inner">🏆</span> ترتيب الفصول حسب نسبة الرصد
           </h3>
           <div className="space-y-7">
             {stats.classesList.map((cls, idx) => (
               <div key={idx} className="group">
                 <div className="flex justify-between items-center mb-2.5 px-1">
                   <div className="flex items-center gap-4">
-                    <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${idx < 3 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 scale-110 shadow-sm' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}>
+                    <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${idx < 3 ? 'bg-amber-100 text-amber-600 scale-110 shadow-sm' : 'bg-slate-50 text-slate-400'}`}>
                       {idx + 1}
                     </span>
-                    <span className="font-black text-slate-700 dark:text-slate-200 text-sm group-hover:text-blue-600 transition-colors">{cls.name}</span>
+                    <span className="font-black text-slate-700 text-sm group-hover:text-blue-600 transition-colors">{cls.name}</span>
                   </div>
                   <div className="flex items-center gap-4">
                      <span className="text-[10px] font-black text-slate-300 tabular-nums">({cls.rasid} من {cls.total})</span>
-                     <span className={`text-xs font-black tabular-nums ${cls.percentage === 100 ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                     <span className={`text-xs font-black tabular-nums ${cls.percentage === 100 ? 'text-emerald-500' : 'text-slate-600'}`}>
                        {cls.percentage}%
                      </span>
                   </div>
                 </div>
-                <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner p-0.5 border border-slate-50 dark:border-slate-700">
+                <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden shadow-inner p-0.5 border border-slate-50">
                   <div 
                     className={`h-full transition-all duration-1000 rounded-full ${cls.percentage === 100 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : cls.percentage >= 75 ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-rose-400'}`}
                     style={{ width: `${cls.percentage}%` }}
@@ -147,17 +139,18 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-10 rounded-[3rem] shadow-inner border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-center space-y-10 print-card">
+        {/* Totals Summary Card */}
+        <div className="bg-slate-50 p-10 rounded-[3rem] shadow-inner border border-slate-100 flex flex-col justify-center items-center text-center space-y-10 print-card">
           <div className="w-full">
-            <div className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl shadow-sm">✓</div>
+            <div className="bg-emerald-100 text-emerald-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl shadow-sm">✓</div>
             <span className="block text-5xl font-black text-emerald-600 tabular-nums">{stats.totalRasid}</span>
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-2 block">درجة مكتملة الرصد</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 block">درجة مكتملة الرصد</span>
           </div>
-          <div className="h-px bg-slate-200 dark:bg-slate-700 w-32"></div>
+          <div className="h-px bg-slate-200 w-32"></div>
           <div className="w-full">
-            <div className="bg-rose-100 dark:bg-rose-900/40 text-rose-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl shadow-sm">!</div>
+            <div className="bg-rose-100 text-rose-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl shadow-sm">!</div>
             <span className="block text-5xl font-black text-rose-500 tabular-nums">{stats.totalLamRasid}</span>
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-2 block">درجة متبقية في الانتظار</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 block">درجة متبقية في الانتظار</span>
           </div>
         </div>
       </div>
@@ -167,17 +160,17 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
 
 const StatCard = ({ title, value, icon, color }: { title: string; value: number | string; icon: string; color: string }) => {
   const colors: any = {
-    blue: 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300',
-    emerald: 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300',
-    amber: 'bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300',
-    indigo: 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300',
+    blue: 'bg-blue-50 text-blue-600',
+    emerald: 'bg-emerald-50 text-emerald-600',
+    amber: 'bg-amber-50 text-amber-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
   };
   return (
-    <div className="bg-white dark:bg-slate-900 p-7 rounded-[2.5rem] shadow-lg border border-slate-50 dark:border-slate-800 flex items-center gap-6 print-card transition-all hover:-translate-y-2 hover:shadow-2xl">
+    <div className="bg-white p-7 rounded-[2.5rem] shadow-lg border border-slate-50 flex items-center gap-6 print-card transition-all hover:-translate-y-2 hover:shadow-2xl">
       <div className={`text-4xl p-5 rounded-3xl ${colors[color]} shadow-inner`}>{icon}</div>
       <div>
-        <span className="block text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest">{title}</span>
-        <span className="text-3xl font-black text-slate-800 dark:text-white tabular-nums leading-none">{value}</span>
+        <span className="block text-slate-400 text-[10px] font-black uppercase mb-1 tracking-widest">{title}</span>
+        <span className="text-3xl font-black text-slate-800 tabular-nums leading-none">{value}</span>
       </div>
     </div>
   );
