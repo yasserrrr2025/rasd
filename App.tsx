@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { RasedSummary, TeacherMapping, Period } from './types';
 import { processRasedFile, extractSummaryData, normalizeString } from './utils/excelProcessor';
 import * as XLSX from 'xlsx';
@@ -14,6 +14,10 @@ const App: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('both');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showNoorGuide, setShowNoorGuide] = useState(false);
+  const [showTeacherGuide, setShowTeacherGuide] = useState(false);
+
+  const hasTeachers = Object.keys(teacherMapping).length > 0;
 
   const handleRasedFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -33,7 +37,6 @@ const App: React.FC = () => {
 
     setRasedSummary(updatedSummary);
     setIsProcessing(false);
-    alert("تم رفع ومعالجة ملفات الرصد بنجاح للفترات المتاحة!");
   };
 
   const handleTeacherFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,132 +65,187 @@ const App: React.FC = () => {
       });
 
       setTeacherMapping(mapping);
-      alert("تم رفع ملف المعلمين بنجاح!");
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const printReport = () => {
-    window.print();
-  };
-
-  const periodLabel = selectedPeriod === 'أولى' ? 'الفترة الأولى' : selectedPeriod === 'ثانية' ? 'الفترة الثانية' : 'الفترتين الأولى والثانية';
+  const printReport = () => window.print();
 
   return (
     <div className="min-h-screen p-4 md:p-8 bg-slate-50">
-      <header className="max-w-6xl mx-auto text-center mb-10 no-print">
-        <h1 className="text-5xl font-black text-slate-900 mb-3 tracking-tight">نظام رصد المواد المتطور</h1>
-        <div className="h-1.5 w-32 bg-blue-600 mx-auto rounded-full mb-4"></div>
-        <p className="text-slate-500 text-lg font-semibold">تحليل ومتابعة دقيقة لنتائج الطلاب للفترات الدراسية</p>
+      <header className="max-w-6xl mx-auto text-center mb-12 no-print">
+        <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg shadow-blue-200">الإصدار المطور 2025</div>
+        <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight">نظام رصد المواد الذكي</h1>
+        <div className="h-1.5 w-40 bg-blue-600 mx-auto rounded-full mb-6"></div>
+        <p className="text-slate-500 text-lg md:text-xl font-bold max-w-2xl mx-auto leading-relaxed">أداة احترافية لتحليل ومتابعة رصد درجات الطلاب في نظام نور بدقة وسهولة</p>
       </header>
 
-      <main className="max-w-6xl mx-auto space-y-8">
-        {/* قسم رفع الملفات واختيار الفترة */}
-        <section className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-100/50 border border-slate-100 no-print transition-all hover:shadow-blue-200/50">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mr-2">
-                <span className="bg-blue-100 p-1.5 rounded-lg text-blue-600">📁</span>
-                ملفات الرصد (يمكنك اختيار ملفات متعددة للفترتين):
-              </label>
+      <main className="max-w-6xl mx-auto space-y-10">
+        <section className="bg-white p-6 md:p-10 rounded-[3rem] shadow-2xl border border-slate-100 no-print">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Noor Files Input */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="flex items-center gap-2 text-sm font-black text-slate-800">
+                  <span className="bg-blue-600 p-2 rounded-xl text-white shadow-md">📁</span>
+                  ملفات رصد نور (Excel)
+                </label>
+                <button 
+                  onClick={() => { setShowNoorGuide(!showNoorGuide); setShowTeacherGuide(false); }}
+                  className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full font-black hover:bg-blue-100 transition-all border border-blue-100"
+                >
+                  {showNoorGuide ? "إغلاق الدليل" : "كيف تحصل على الملفات؟"}
+                </button>
+              </div>
               <input 
                 type="file" 
                 multiple 
                 onChange={handleRasedFiles}
-                className="block w-full text-sm text-slate-500 file:ml-4 file:py-3 file:px-6 file:rounded-2xl file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
+                className="block w-full text-xs text-slate-500 file:ml-4 file:py-3.5 file:px-8 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
               />
             </div>
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mr-2">
-                <span className="bg-teal-100 p-1.5 rounded-lg text-teal-600">👨‍🏫</span>
-                ملف المعلمين (اختياري لربط المواد بالأسماء):
-              </label>
+            
+            {/* Teacher File Input */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="flex items-center gap-2 text-sm font-black text-slate-800">
+                  <span className="bg-teal-600 p-2 rounded-xl text-white shadow-md">👨‍🏫</span>
+                  ملف المعلمين (اختياري)
+                </label>
+                <button 
+                  onClick={() => { setShowTeacherGuide(!showTeacherGuide); setShowNoorGuide(false); }}
+                  className="text-[10px] bg-teal-50 text-teal-600 px-3 py-1.5 rounded-full font-black hover:bg-teal-100 transition-all border border-teal-100"
+                >
+                  {showTeacherGuide ? "إخفاء الدليل" : "شكل ملف المعلم؟"}
+                </button>
+              </div>
               <input 
                 type="file" 
                 onChange={handleTeacherFile}
-                className="block w-full text-sm text-slate-500 file:ml-4 file:py-3 file:px-6 file:rounded-2xl file:border-0 file:text-sm file:font-bold file:bg-teal-600 file:text-white hover:file:bg-teal-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
+                className="block w-full text-xs text-slate-500 file:ml-4 file:py-3.5 file:px-8 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-teal-600 file:text-white hover:file:bg-teal-700 transition-all cursor-pointer bg-slate-50 rounded-2xl p-2 border-2 border-dashed border-slate-200"
               />
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col items-center space-y-8 border-t border-slate-100 pt-8">
-            <div className="flex flex-col items-center space-y-4">
-              <span className="text-slate-600 font-bold">اختر الفترة المراد عرضها في التقارير:</span>
-              <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] shadow-inner">
-                <button 
-                  onClick={() => setSelectedPeriod('أولى')}
-                  className={`px-8 py-3 rounded-2xl font-bold transition-all duration-300 ${selectedPeriod === 'أولى' ? 'bg-white text-blue-600 shadow-xl scale-105' : 'text-slate-500 hover:text-slate-800'}`}
-                >الفترة الأولى</button>
-                <button 
-                  onClick={() => setSelectedPeriod('ثانية')}
-                  className={`px-8 py-3 rounded-2xl font-bold transition-all duration-300 ${selectedPeriod === 'ثانية' ? 'bg-white text-blue-600 shadow-xl scale-105' : 'text-slate-500 hover:text-slate-800'}`}
-                >الفترة الثانية</button>
-                <button 
-                  onClick={() => setSelectedPeriod('both')}
-                  className={`px-8 py-3 rounded-2xl font-bold transition-all duration-300 ${selectedPeriod === 'both' ? 'bg-white text-blue-600 shadow-xl scale-105' : 'text-slate-500 hover:text-slate-800'}`}
-                >الفترتين معاً</button>
+          {/* Noor Guide Section */}
+          {showNoorGuide && (
+            <div className="mt-8 p-8 bg-slate-900 rounded-[2.5rem] text-white animate-in slide-in-from-top duration-500 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full -ml-32 -mt-32 blur-3xl"></div>
+              <h4 className="text-lg font-black mb-6 flex items-center gap-3 relative z-10">
+                <span className="bg-blue-600 p-2 rounded-xl">ℹ️</span> 
+                خطوات استخراج ملفات الرصد من نظام نور:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 text-sm font-bold">
+                <ul className="space-y-4 text-slate-300">
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">1</span> من نظام نور، توجه إلى قائمة "التقارير"</li>
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">2</span> اختر "تقارير الدرجات"</li>
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">3</span> اختر تقرير "متابعة رصد الفترات"</li>
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">4</span> حدد الصف والفصل الدراسي المطلوب</li>
+                </ul>
+                <ul className="space-y-4 text-slate-300">
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">5</span> اضغط على زر "عرض"</li>
+                  <li className="flex gap-3 items-start text-amber-400">
+                    <span className="bg-amber-400/20 text-amber-400 w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">6</span> 
+                    يجب توفر إضافة "مدرستي بلس" لتحميل الملف
+                    <a href="https://chromewebstore.google.com/detail/maogiolhkdhjobnlobpkcpnmamnmilno?utm_source=item-share-cb" target="_blank" rel="noreferrer" className="inline-block bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-[10px] text-white underline mr-2">تحميل الإضافة ➜</a>
+                  </li>
+                  <li className="flex gap-3 items-start"><span className="bg-white/10 text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs">7</span> حمل ملفات جميع الفصول واحفظها في مجلد واحد لسهولة الرفع</li>
+                </ul>
+              </div>
+              <div className="mt-8 pt-6 border-t border-white/10 text-xs text-slate-400 font-bold flex items-center gap-2">
+                <span className="text-blue-500">💡 نصيحة:</span> عند اختيار الملفات من جهازك، يمكنك تظليل جميع الملفات ورفعها دفعة واحدة.
               </div>
             </div>
+          )}
 
-            <div className="flex flex-wrap gap-4 justify-center">
+          {/* Teacher Guide Section */}
+          {showTeacherGuide && (
+            <div className="mt-8 p-8 bg-slate-900 rounded-[2.5rem] text-white animate-in slide-in-from-top duration-500 relative overflow-hidden">
+              <h4 className="text-lg font-black mb-6 flex items-center gap-3 relative z-10">
+                <span className="bg-teal-600 p-2 rounded-xl">👨‍🏫</span> 
+                تنسيق ملف المعلمين المطلوب (Excel):
+              </h4>
+              <div className="overflow-x-auto relative z-10">
+                <table className="w-full text-center text-[10px] border-collapse bg-white/5 rounded-2xl overflow-hidden">
+                  <thead>
+                    <tr className="bg-white/10">
+                      <th className="p-3 border-l border-white/10">اسم المعلم</th>
+                      <th className="p-3 border-l border-white/10">الصف</th>
+                      <th className="p-3 border-l border-white/10">المادة</th>
+                      <th className="p-3">الفصل</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-white/5">
+                      <td className="p-3 border-l border-white/10">خالد الشمري</td>
+                      <td className="p-3 border-l border-white/10">أول متوسط</td>
+                      <td className="p-3 border-l border-white/10">علوم</td>
+                      <td className="p-3">1</td>
+                    </tr>
+                    <tr className="border-t border-white/5">
+                      <td className="p-3 border-l border-white/10">نورة القحطاني</td>
+                      <td className="p-3 border-l border-white/10">ثالث متوسط</td>
+                      <td className="p-3 border-l border-white/10">لغة إنجليزية</td>
+                      <td className="p-3">3</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-6 text-[10px] text-slate-400 font-bold leading-relaxed">
+                * ملف المعلمين غير ضروري لتشغيل النظام، ولكنه مطلوب في حال أردت تفعيل ميزة "تقارير المعلمين المقصرين".
+              </p>
+            </div>
+          )}
+
+          <div className="mt-12 flex flex-col items-center space-y-10 border-t border-slate-100 pt-10">
+            <div className="flex bg-slate-100 p-1.5 rounded-[1.8rem] shadow-inner">
+              {(['أولى', 'ثانية', 'both'] as const).map(p => (
+                <button 
+                  key={p}
+                  onClick={() => setSelectedPeriod(p)}
+                  className={`px-8 md:px-12 py-3.5 rounded-2xl font-black transition-all duration-300 text-sm ${selectedPeriod === p ? 'bg-white text-blue-600 shadow-xl scale-105' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  {p === 'أولى' ? 'الفترة الأولى' : p === 'ثانية' ? 'الفترة الثانية' : 'الفترتين معاً'}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-5 justify-center">
               <button 
                 onClick={() => setShowResults(true)}
                 disabled={Object.keys(rasedSummary).length === 0}
-                className="group relative bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xl shadow-blue-200 overflow-hidden"
+                className="group relative bg-blue-600 text-white px-12 py-4.5 rounded-[1.5rem] font-black hover:bg-blue-700 disabled:opacity-40 transition-all shadow-2xl shadow-blue-200 flex items-center gap-3"
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  <span>🚀</span> عرض الملخص النهائي ({periodLabel})
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                🚀 استعراض التقرير التفصيلي
               </button>
-              
-              <button 
-                onClick={printReport}
-                className="bg-emerald-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 flex items-center gap-2"
-              >
-                <span>🖨️</span> طباعة التقرير الشامل
+              <button onClick={printReport} className="bg-slate-900 text-white px-12 py-4.5 rounded-[1.5rem] font-black hover:bg-slate-800 transition-all shadow-2xl flex items-center gap-3">
+                🖨️ طباعة النتائج
               </button>
             </div>
           </div>
         </section>
 
         {isProcessing && (
-          <div className="text-center py-20 bg-white rounded-[2.5rem] shadow-xl animate-pulse">
-            <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-blue-600 mx-auto mb-6"></div>
-            <p className="text-slate-700 text-xl font-black">جاري تحليل البيانات واستخراج النتائج...</p>
+          <div className="text-center py-24 bg-white rounded-[3rem] shadow-2xl border border-slate-100">
+            <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-600 border-r-4 border-r-blue-100 mx-auto mb-8"></div>
+            <p className="text-slate-900 text-2xl font-black">جاري تحليل البيانات بذكاء...</p>
+            <p className="text-slate-400 mt-2 font-bold">يرجى الانتظار قليلاً لمعالجة ملفات نور</p>
           </div>
         )}
 
         {showResults && !isProcessing && (
-          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <Dashboard 
-              rasedSummary={rasedSummary} 
-              teacherMapping={teacherMapping} 
-              period={selectedPeriod} 
-            />
-            
-            <TeachersReport 
-              rasedSummary={rasedSummary} 
-              teacherMapping={teacherMapping} 
-              period={selectedPeriod} 
-            />
-
-            <SummaryTables 
-              rasedSummary={rasedSummary} 
-              teacherMapping={teacherMapping} 
-              period={selectedPeriod} 
-            />
-
-            <TrackingTables 
-              rasedSummary={rasedSummary} 
-              period={selectedPeriod} 
-            />
+          <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+            <Dashboard rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
+            {hasTeachers && <TeachersReport rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />}
+            <SummaryTables rasedSummary={rasedSummary} teacherMapping={teacherMapping} period={selectedPeriod} />
+            <TrackingTables rasedSummary={rasedSummary} period={selectedPeriod} />
           </div>
         )}
       </main>
 
-      <footer className="mt-20 text-center text-slate-400 pb-10 no-print border-t border-slate-200 pt-8 max-w-6xl mx-auto">
-        <p className="font-bold">© {new Date().getFullYear()} نظام رصد المواد المتطور | دقة في الأداء وسهولة في التحليل</p>
+      <footer className="max-w-6xl mx-auto mt-20 pb-10 text-center no-print">
+         <div className="h-px bg-slate-200 w-full mb-8"></div>
+         <p className="text-slate-400 text-xs font-black uppercase tracking-widest">تم التطوير لتسهيل العمل الإداري المدرسي • 2025</p>
       </footer>
     </div>
   );
