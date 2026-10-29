@@ -335,9 +335,9 @@ export const extractSummaryData = (
       }
 
       const cellVal = row[index];
-      // 1 = تم الرصد، 0 = لم يتم الرصد
-      const isRasid = cellVal === 1 || cellVal === "1" || cellVal === true || (typeof cellVal === 'number' && cellVal > 0);
-      const isLamRasid = cellVal === 0 || cellVal === "0" || cellVal === false;
+      // 0 = تم الرصد، 1 (أو أكبر من 0) = لم يرصد
+      const isRasid = cellVal === 0 || cellVal === "0";
+      const isLamRasid = cellVal === 1 || cellVal === "1" || (typeof cellVal === 'number' && cellVal > 0);
 
       if (isRasid) {
         subData.studentRasidStatus[currentStudentName] = true;
