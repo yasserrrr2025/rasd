@@ -11,7 +11,7 @@ interface TeachersReportProps {
 const TeachersReport: React.FC<TeachersReportProps> = ({ rasedSummary, teacherMapping, period }) => {
   const reportData = React.useMemo(() => {
     const stats: Record<string, { lam: number; rasid: number }> = {};
-    const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
+    const targetPeriods = period === 'both' ? ['أولى', 'ثانية', 'نهاية فصل'] : [period];
 
     for (const saf in rasedSummary) {
       for (const fasel in rasedSummary[saf]) {
@@ -52,7 +52,7 @@ const TeachersReport: React.FC<TeachersReportProps> = ({ rasedSummary, teacherMa
   return (
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 print-card print-break-before">
       <div className="bg-rose-600 text-white p-6 text-center">
-        <h3 className="text-xl font-bold">معلمون لم يكملوا رصد الدرجات ({period === 'both' ? 'الفترتين' : period})</h3>
+        <h3 className="text-xl font-bold">معلمون لم يكملوا رصد الدرجات ({period === 'both' ? 'جميع الفترات' : period === 'نهاية فصل' ? 'نهاية الفصل' : 'الفترة ' + period})</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-right">

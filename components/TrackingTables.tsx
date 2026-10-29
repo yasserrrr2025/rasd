@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { RasedSummary, Period } from '../types';
 
@@ -21,12 +20,16 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
         const allSubjectsSet = new Set<string>();
         const p1Data = rasedSummary[saf][fasel]['أولى'] || {};
         const p2Data = rasedSummary[saf][fasel]['ثانية'] || {};
+        const p3Data = rasedSummary[saf][fasel]['نهاية فصل'] || {};
         
         if (period === 'أولى' || period === 'both') {
           Object.keys(p1Data).forEach(s => allSubjectsSet.add(s));
         }
         if (period === 'ثانية' || period === 'both') {
           Object.keys(p2Data).forEach(s => allSubjectsSet.add(s));
+        }
+        if (period === 'نهاية فصل' || period === 'both') {
+          Object.keys(p3Data).forEach(s => allSubjectsSet.add(s));
         }
         
         const sortedSubjects = Array.from(allSubjectsSet).sort();
@@ -35,7 +38,8 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
         const allStudentsSet = new Set<string>();
         sortedSubjects.forEach(s => {
           if (p1Data[s]) p1Data[s].studentsList.forEach(st => allStudentsSet.add(st));
-          if (p2Data[s]) p2Data[s].studentsList.forEach(st => allSubjectsSet.add(st));
+          if (p2Data[s]) p2Data[s].studentsList.forEach(st => allStudentsSet.add(st));
+          if (p3Data[s]) p3Data[s].studentsList.forEach(st => allStudentsSet.add(st));
         });
         
         const sortedStudents = Array.from(allStudentsSet).sort();
@@ -53,7 +57,8 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
             totalPages,
             startIdx: start,
             p1Data,
-            p2Data
+            p2Data,
+            p3Data
           });
         }
       }
@@ -71,7 +76,7 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 -mr-16 -mt-16 rounded-full"></div>
             <div className="relative z-10">
               <h3 className="text-lg font-black">
-                متابعة رصد الطلاب {isBoth ? '(الفترتين الشاملة)' : `(${period === 'أولى' ? 'الفترة الأولى' : 'الفترة الثانية'})`}
+                متابعة رصد الطلاب {isBoth ? '(الفترات الشاملة)' : period === 'نهاية فصل' ? '(نهاية الفصل)' : `(${period === 'أولى' ? 'الفترة الأولى' : 'الفترة الثانية'})`}
               </h3>
               <div className="flex items-center justify-center gap-3 mt-1">
                 <span className="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px] font-black">
@@ -91,7 +96,7 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
                   <th rowSpan={isBoth ? 2 : 1} className="w-8 px-1 py-1.5 border border-slate-300 text-center text-[9px] font-black text-slate-600">م</th>
                   <th rowSpan={isBoth ? 2 : 1} className="w-44 px-1.5 py-1.5 border border-slate-300 text-[10px] font-black text-slate-600">اسم الطالب</th>
                   {page.subjects.map(s => (
-                    <th key={s} colSpan={isBoth ? 2 : 1} className="px-1 py-1 border border-slate-300 text-center font-bold text-slate-700 bg-white min-w-[35px]">
+                    <th key={s} colSpan={isBoth ? 3 : 1} className="px-1 py-1 border border-slate-300 text-center font-bold text-slate-700 bg-white min-w-[35px]">
                       <div className="text-[7px] leading-tight break-words whitespace-normal h-7 flex items-center justify-center text-center">
                         {s}
                       </div>
@@ -104,6 +109,7 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
                       <React.Fragment key={`${s}-sub`}>
                         <th className="px-0 py-0.5 border border-slate-300 text-center text-[7px] font-black text-blue-700 bg-blue-50/30">ف1</th>
                         <th className="px-0 py-0.5 border border-slate-300 text-center text-[7px] font-black text-purple-700 bg-purple-50/30">ف2</th>
+                        <th className="px-0 py-0.5 border border-slate-300 text-center text-[7px] font-black text-emerald-700 bg-emerald-50/30">نهـ</th>
                       </React.Fragment>
                     ))}
                   </tr>
@@ -117,24 +123,30 @@ const TrackingTables: React.FC<TrackingTablesProps> = ({ rasedSummary, period })
                     {page.subjects.map(subj => {
                       const isP1Recorded = page.p1Data[subj]?.studentRasidStatus[student];
                       const isP2Recorded = page.p2Data[subj]?.studentRasidStatus[student];
+                      const isP3Recorded = page.p3Data[subj]?.studentRasidStatus[student];
                       
                       if (isBoth) {
                         return (
                           <React.Fragment key={subj}>
                             <td className={`px-0 py-0.5 text-center border border-slate-200 ${isP1Recorded === undefined ? 'bg-slate-100/30' : ''}`}>
                               {isP1Recorded !== undefined && (
-                                <div className={`w-1.5 h-1.5 mx-auto rounded-full ${isP1Recorded ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                <div className={`w-1.5 h-1.5 mx-auto rounded-full ${isP1Recorded ? 'bg-emerald-500' : 'bg-rose-500'}`} title={`ف1: ${isP1Recorded ? 'تم الرصد' : 'لم يرصد'}`}></div>
                               )}
                             </td>
                             <td className={`px-0 py-0.5 text-center border border-slate-200 ${isP2Recorded === undefined ? 'bg-slate-100/30' : ''}`}>
                               {isP2Recorded !== undefined && (
-                                <div className={`w-1.5 h-1.5 mx-auto rounded-full ${isP2Recorded ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                <div className={`w-1.5 h-1.5 mx-auto rounded-full ${isP2Recorded ? 'bg-emerald-500' : 'bg-rose-500'}`} title={`ف2: ${isP2Recorded ? 'تم الرصد' : 'لم يرصد'}`}></div>
+                              )}
+                            </td>
+                            <td className={`px-0 py-0.5 text-center border border-slate-200 ${isP3Recorded === undefined ? 'bg-slate-100/30' : ''}`}>
+                              {isP3Recorded !== undefined && (
+                                <div className={`w-1.5 h-1.5 mx-auto rounded-full ${isP3Recorded ? 'bg-emerald-500' : 'bg-rose-500'}`} title={`نهائي: ${isP3Recorded ? 'تم الرصد' : 'لم يرصد'}`}></div>
                               )}
                             </td>
                           </React.Fragment>
                         );
                       } else {
-                        const isRecorded = period === 'أولى' ? isP1Recorded : isP2Recorded;
+                        const isRecorded = period === 'أولى' ? isP1Recorded : period === 'ثانية' ? isP2Recorded : isP3Recorded;
                         return (
                           <td key={subj} className={`px-0 py-0.5 text-center border border-slate-200 ${isRecorded === undefined ? 'bg-slate-100/30' : ''}`}>
                             {isRecorded !== undefined && (

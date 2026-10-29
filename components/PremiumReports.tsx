@@ -13,7 +13,7 @@ const PremiumReports: React.FC<PremiumReportsProps> = ({ rasedSummary, teacherMa
   
   const lostStudents = useMemo(() => {
     const students: Array<{ name: string; saf: string; fasel: string; missingCount: number; missingSubjects: string[] }> = [];
-    const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
+    const targetPeriods = period === 'both' ? ['أولى', 'ثانية', 'نهاية فصل'] : [period];
 
     for (const saf in rasedSummary) {
       for (const fasel in rasedSummary[saf]) {
@@ -57,7 +57,7 @@ const PremiumReports: React.FC<PremiumReportsProps> = ({ rasedSummary, teacherMa
     const summaryRows: any[] = [];
     for (const saf in rasedSummary) {
       for (const fasel in rasedSummary[saf]) {
-        ['أولى', 'ثانية'].forEach(p => {
+        ['أولى', 'ثانية', 'نهاية فصل'].forEach(p => {
           const pData = rasedSummary[saf][fasel][p];
           if (!pData) return;
           Object.entries(pData).forEach(([sub, data]) => {

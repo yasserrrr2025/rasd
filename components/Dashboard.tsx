@@ -17,7 +17,7 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
     let teachersSet = new Set<string>();
     let classesList: any[] = [];
 
-    const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
+    const targetPeriods = period === 'both' ? ['أولى', 'ثانية', 'نهاية فصل'] : [period];
 
     for (const saf in rasedSummary) {
       for (const fasel in rasedSummary[saf]) {
@@ -72,7 +72,7 @@ const Dashboard: React.FC<DashboardProps> = ({ rasedSummary, teacherMapping, per
     };
   }, [rasedSummary, teacherMapping, period]);
 
-  const periodLabel = period === 'أولى' ? 'الفترة الأولى' : period === 'ثانية' ? 'الفترة الثانية' : 'الفترتين الأولى والثانية الشاملة';
+  const periodLabel = period === 'أولى' ? 'الفترة الأولى' : period === 'ثانية' ? 'الفترة الثانية' : period === 'نهاية فصل' ? 'نهاية الفصل' : 'الفترات الشاملة (أولى وثانية ونهاية فصل)';
 
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-700">

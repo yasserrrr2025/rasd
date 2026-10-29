@@ -19,7 +19,7 @@ interface SelectedDetails {
 
 const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapping, period }) => {
   const [selectedDetails, setSelectedDetails] = useState<SelectedDetails | null>(null);
-  const periodLabel = period === 'أولى' ? 'الفترة الأولى' : period === 'ثانية' ? 'الفترة الثانية' : 'مقارنة الفترتين الشاملة';
+  const periodLabel = period === 'أولى' ? 'الفترة الأولى' : period === 'ثانية' ? 'الفترة الثانية' : period === 'نهاية فصل' ? 'نهاية الفصل' : 'مقارنة الفترات الشاملة';
   const hasTeachers = Object.keys(teacherMapping).length > 0;
 
   const closeModal = () => setSelectedDetails(null);
@@ -104,7 +104,7 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
       {Object.entries(rasedSummary).map(([saf, fasels]) => (
         <div key={saf} className="space-y-8">
           {Object.entries(fasels).map(([fasel, periodsData]) => {
-            const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
+            const targetPeriods = period === 'both' ? ['أولى', 'ثانية', 'نهاية فصل'] : [period];
             const hasData = targetPeriods.some(p => periodsData[p] && Object.keys(periodsData[p]).length > 0);
             if (!hasData) return null;
 
@@ -117,15 +117,18 @@ const SummaryTables: React.FC<SummaryTablesProps> = ({ rasedSummary, teacherMapp
                   <p className="text-blue-400 text-[10px] font-black uppercase mt-1 relative z-10">{periodLabel}</p>
                 </div>
 
-                <div className={`grid gap-6 ${period === 'both' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+                <div className={`grid gap-6 ${period === 'both' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                   {targetPeriods.map(p => {
                     const subjects = periodsData[p];
                     if (!subjects) return null;
 
+                    const periodHeaderBg = p === 'أولى' ? 'bg-blue-600' : p === 'ثانية' ? 'bg-purple-600' : 'bg-emerald-600';
+                    const periodTitle = p === 'نهاية فصل' ? 'نتائج نهاية الفصل' : `نتائج الفترة ${p}`;
+
                     return (
                       <div key={p} className="bg-white rounded-[1.5rem] shadow-xl border border-slate-100 overflow-hidden print-card transition-all hover:shadow-2xl">
-                        <div className={`py-3 px-6 text-white font-black text-xs flex justify-between items-center ${p === 'أولى' ? 'bg-blue-600' : 'bg-purple-600'}`}>
-                          <span>نتائج الفترة {p}</span>
+                        <div className={`py-3 px-6 text-white font-black text-xs flex justify-between items-center ${periodHeaderBg}`}>
+                          <span>{periodTitle}</span>
                           <span className="bg-white/20 px-2 py-0.5 rounded-lg text-[9px] uppercase">المواد: {Object.keys(subjects).length}</span>
                         </div>
                         <div className="overflow-x-auto">

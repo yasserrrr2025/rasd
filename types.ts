@@ -1,5 +1,5 @@
 
-export type Period = 'أولى' | 'ثانية' | 'both';
+export type Period = 'أولى' | 'ثانية' | 'نهاية فصل' | 'both';
 
 export interface StudentStatus {
   [studentName: string]: boolean;
@@ -40,4 +40,20 @@ export interface TeacherStat {
   lamRasidCount: number;
   rasidCount: number;
   percentage: number;
+}
+
+export interface StudentGuidanceInfo {
+  id: string;
+  cleanId: string;
+  name: string;
+  saf: string;
+  safCode: string;
+  fasel: string;
+  phone?: string;
+}
+
+export interface StudentGuidanceMap {
+  byId: { [id: string]: StudentGuidanceInfo };
+  byName: { [normalizedName: string]: StudentGuidanceInfo };
+  totalStudents: number;
 }

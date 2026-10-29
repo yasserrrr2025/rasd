@@ -25,7 +25,7 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ rasedSummary, tea
     const classes: string[] = [];
     const subjectsSet = new Set<string>();
     const data: Record<string, Record<string, { current: number; old?: number }>> = {};
-    const targetPeriods = period === 'both' ? ['أولى', 'ثانية'] : [period];
+    const targetPeriods = period === 'both' ? ['أولى', 'ثانية', 'نهاية فصل'] : [period];
 
     for (const saf in rasedSummary) {
       for (const fasel in rasedSummary[saf]) {
